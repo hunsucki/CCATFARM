@@ -16,8 +16,8 @@ interface RobotState {
 
 export default function Home() {
   const { ros, status } = useRos()
-  const battery = useBattery()
-  const diagnostics = useDiagnostics(5)
+  const battery = useBattery(ros, status)
+  const diagnostics = useDiagnostics(ros, status, 5)
   const [robot, setRobot] = useState<RobotState>({
     zone: '---',
     x: 0,

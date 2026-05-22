@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { Bell, Wifi, WifiOff, Loader } from 'lucide-react'
 import { useRos } from '../hooks/useRos'
 import { useBattery } from '../hooks/useBattery'
-import { useCamera } from '../hooks/useCamera'
+import { TOPICS } from '../config/rosTopics'
 import { getZoneName } from '../utils/zoneMap'
+import CameraStream from '../components/CameraStream'
 import Joystick from '../components/Joystick'
 import RosMap from '../components/RosMap'
 
@@ -21,8 +22,7 @@ export default function Map() {
   const [mode, setMode] = useState<'AUTO' | 'MANUAL'>('AUTO')
   const [emergency, setEmergency] = useState(false)
   const { ros, status } = useRos()
-  const battery = useBattery()
-  const cameraSrc = useCamera(ros, status)
+  const battery = useBattery(ros, status)
   const [pose, setPose] = useState<RobotPose | null>(null)
 
   // /amcl_pose 구독
@@ -30,8 +30,8 @@ export default function Map() {
     if (!ros || status !== 'connected') return
     const poseTopic = new ROSLIB.Topic({
       ros,
-      name: '/amcl_pose',
-      messageType: 'geometry_msgs/msg/PoseWithCovarianceStamped',
+      name: TOPICS.AMCL_POSE.name,
+      messageType: TOPICS.AMCL_POSE.messageType,
     })
     poseTopic.subscribe((message: any) => {
       const pos = message.pose?.pose?.position
@@ -53,8 +53,8 @@ export default function Map() {
     if (!ros || status !== 'connected') return
     const cmdVel = new ROSLIB.Topic({
       ros,
-      name: '/cmd_vel',
-      messageType: 'geometry_msgs/msg/Twist',
+      name: TOPICS.CMD_VEL.name,
+      messageType: TOPICS.CMD_VEL.messageType,
     })
     cmdVel.publish({
       linear: { x: linear, y: 0, z: 0 },
@@ -96,17 +96,7 @@ export default function Map() {
       <div className="page-content">
         {/* Camera Feed — ROS CompressedImage */}
         <div className="camera-feed">
-          {cameraSrc ? (
-            <img
-              src={cameraSrc}
-              alt="Robot Camera"
-              className="camera-stream"
-            />
-          ) : (
-            <div className="camera-placeholder">
-              {status === 'connected' ? '카메라 영상 수신 대기 중...' : 'ROS 연결 대기 중...'}
-            </div>
-          )}
+          <CameraStream ros={ros} status={status} />
           <div className="camera-overlay">
             <span className="camera-tag red">{pose ? `● X:${pose.x.toFixed(1)} Y:${pose.y.toFixed(1)}` : '● 위치 대기'}</span>
             <div className="camera-stats">
@@ -117,7 +107,7 @@ export default function Map() {
         </div>
 
         {/* ROS 실시간 맵 */}
-        <RosMap robotPose={pose} />
+        <RosMap ros={ros} status={status} robotPose={pose} />
 
         {/* ROS 위치 정보 */}
         <div className="card">
