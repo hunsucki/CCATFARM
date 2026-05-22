@@ -241,6 +241,16 @@ export default function RosMap({ ros, status, robotPose }: RosMapProps) {
     return () => window.clearTimeout(timeout)
   }, [initialPoseStatus])
 
+  useEffect(() => {
+    if (initialPoseStatus.state !== 'confirmed' && initialPoseStatus.state !== 'timeout') return
+
+    const timeout = window.setTimeout(() => {
+      setInitialPoseStatus({ state: 'idle' })
+    }, 3500)
+
+    return () => window.clearTimeout(timeout)
+  }, [initialPoseStatus])
+
   const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (!poseMode) return
     const start = canvasToWorld(event.clientX, event.clientY)
