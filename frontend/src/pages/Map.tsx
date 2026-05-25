@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Bell, Wifi, WifiOff, Loader } from 'lucide-react'
 import { useRos } from '../hooks/useRos'
 import { useBattery } from '../hooks/useBattery'
+import { useRobotCommand } from '../hooks/useRobotCommand'
 import { TOPICS } from '../config/rosTopics'
 import { getZoneName } from '../utils/zoneMap'
 import CameraStream from '../components/CameraStream'
@@ -23,6 +24,7 @@ export default function Map() {
   const [emergency, setEmergency] = useState(false)
   const { ros, status } = useRos()
   const battery = useBattery(ros, status)
+  const publishRobotCommand = useRobotCommand(ros, status)
   const [pose, setPose] = useState<RobotPose | null>(null)
 
   // /amcl_pose 구독
@@ -44,8 +46,12 @@ export default function Map() {
   const handleEmergency = () => {
     const next = !emergency
     setEmergency(next)
-    if (next) setMode('MANUAL')
-    else setMode('AUTO')
+    if (next) {
+      publishRobotCommand('ESTOP')
+      setMode('MANUAL')
+    } else {
+      setMode('AUTO')
+    }
   }
 
   // cmd_vel 퍼블리시 (ROS 연결 시)
@@ -186,11 +192,24 @@ export default function Map() {
 
         {/* Action Buttons */}
         <div className="robot-actions">
-          <button className="action-btn start">START</button>
-          <button className="action-btn home">HOME</button>
+          <button
+            className="action-btn start"
+            onClick={() => publishRobotCommand('START')}
+            disabled={status !== 'connected'}
+          >
+            START
+          </button>
+          <button
+            className="action-btn home"
+            onClick={() => publishRobotCommand('HOME')}
+            disabled={status !== 'connected'}
+          >
+            HOME
+          </button>
           <button
             className={`action-btn emergency ${emergency ? 'emergency-active' : ''}`}
             onClick={handleEmergency}
+            disabled={status !== 'connected'}
           >
             {emergency ? 'CANCEL' : 'EMERGENCY'}
           </button>

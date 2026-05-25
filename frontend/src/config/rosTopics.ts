@@ -17,6 +17,14 @@ export const TOPICS = {
     description: '로봇 선속도/각속도 명령',
   },
 
+  // 로봇 상위 명령 (퍼블리시) — START/HOME/ESTOP
+  ROBOT_COMMAND: {
+    name: '/robot_command',
+    messageType: 'std_msgs/msg/String',
+    direction: 'publish' as const,
+    description: '로봇 상위 제어 명령',
+  },
+
   // 오도메트리 (구독) — 로봇 이동 거리, 속도
   ODOM: {
     name: '/odom',
